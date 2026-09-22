@@ -1,0 +1,40 @@
+services:
+  postgres_db:
+    image: postgres:16-alpine
+    container_name: dm_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: dm_user
+      POSTGRES_PASSWORD: dm_password
+      POSTGRES_DB: enterprise_warehouse
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./init-db:/docker-entrypoint-initdb.d
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - dm_network
+
+  analytics:
+    build:
+      context: ./apps/analytics
+      dockerfile: Dockerfile
+    container_name: dm_analytics
+    volumes:
+      - ./apps/analytics:/workspace/apps/analytics
+    environment:
+      - PYTHONPATH=/workspace/apps/analytics
+      - DB_URL=postgresql+psycopg2://dm_user:dm_password@postgres_db:5432/enterprise_warehouse
+    working_dir: /workspace/apps/analytics
+    command: tail -f /dev/null
+    depends_on:
+      - postgres_db
+    networks:
+      - dm_network
+
+networks:
+  dm_network:
+    driver: bridge
+
+volumes:
+  pg_data:

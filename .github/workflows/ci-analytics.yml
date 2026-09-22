@@ -1,0 +1,23 @@
+name: CI Contenerizado Módulo Analytics
+
+on:
+  push:
+    paths:
+      - 'apps/analytics/**'
+      - '.github/workflows/ci-analytics.yml'
+      - 'docker-compose.yml'
+  pull_request:
+    paths:
+      - 'apps/analytics/**'
+
+jobs:
+  test-container:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar código
+        uses: actions/checkout@v4
+
+      - name: Construir y ejecutar tests en Docker Compose
+        run: |
+          docker compose build analytics
+          docker compose run --rm analytics pytest -v tests/

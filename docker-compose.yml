@@ -1,14 +1,28 @@
+# services:
+#   analytics:
+#     build:
+#       context: ./apps/analytics
+#       dockerfile: Dockerfile
+#     container_name: dm_analytics
+#     volumes:
+#       # Montar código local para reflejar cambios sin reconstruir la imagen
+#       - ./apps/analytics:/workspace/apps/analytics
+#     environment:
+#       - PYTHONPATH=/workspace/apps/analytics
+#     working_dir: /workspace/apps/analytics
+#     command: tail -f /dev/null
+
 services:
   postgres_db:
     image: postgres:16-alpine
-    container_name: dm_postgres
+    container_name: dm_postgres2
     restart: always
     environment:
       POSTGRES_USER: dm_user
       POSTGRES_PASSWORD: dm_password
       POSTGRES_DB: enterprise_warehouse
     ports:
-      - "5433:5432"
+      - "127.0.0.1:5437:5432"
     volumes:
       - ./init-db:/docker-entrypoint-initdb.d
       - pg_data:/var/lib/postgresql/data
@@ -19,16 +33,35 @@ services:
     build:
       context: ./apps/analytics
       dockerfile: Dockerfile
-    container_name: dm_analytics
+    container_name: dm_analytics2
+    ports:
+      - "127.0.0.1:8000:8000"
     volumes:
       - ./apps/analytics:/workspace/apps/analytics
     environment:
       - PYTHONPATH=/workspace/apps/analytics
       - DB_URL=postgresql+psycopg2://dm_user:dm_password@postgres_db:5432/enterprise_warehouse
     working_dir: /workspace/apps/analytics
-    command: tail -f /dev/null
+    command: uvicorn src.api:app --host 0.0.0.0 --port 8000 --reload
     depends_on:
       - postgres_db
+    networks:
+      - dm_network
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: dm_web2
+    ports:
+      - "127.0.0.1:5173:5173"
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - analytics
     networks:
       - dm_network
 

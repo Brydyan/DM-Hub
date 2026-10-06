@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS customer_credit_transactions (
 );
 
 INSERT INTO customer_credit_transactions 
-(customer_id, age, annual_income, credit_score, loan_amount, has_defaulted, region)
+(customer_id, age, annual_income, credit_score, loan_amount, has_defaulted, region) 
 VALUES
 ('CUST-1001', 34, 45000.00, 710, 12000.00, FALSE, 'Costa'),
 ('CUST-1002', 45, 82000.50, 680, 25000.00, FALSE, 'Sierra'),
